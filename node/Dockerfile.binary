@@ -1,0 +1,46 @@
+FROM debian:bookworm-slim AS builder
+
+ARG AB_VERSION
+ARG AB_DEPLOY_VERSION
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    curl \
+    tar \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /build
+
+RUN curl -fL "https://github.com/ABFoundationGlobal/abcore/releases/download/${AB_VERSION}/geth-${AB_VERSION}" \
+      -o geth && \
+    curl -fL "https://github.com/ABFoundationGlobal/abcore/releases/download/${AB_VERSION}/geth-${AB_VERSION}.sha256" \
+      -o geth.sha256 && \
+    expected="$(awk '{print $1}' geth.sha256)" && \
+    actual="$(sha256sum geth | awk '{print $1}')" && \
+    [ "$expected" = "$actual" ] && \
+    chmod +x geth
+
+RUN curl -fL "https://github.com/ABFoundationGlobal/ab-deploy/releases/download/${AB_DEPLOY_VERSION}/abcore-mainnet-${AB_DEPLOY_VERSION}.tar.gz" \
+      -o deploy.tar.gz && \
+    curl -fL "https://github.com/ABFoundationGlobal/ab-deploy/releases/download/${AB_DEPLOY_VERSION}/abcore-mainnet-${AB_DEPLOY_VERSION}.tar.gz.sha256" \
+      -o deploy.tar.gz.sha256 && \
+    expected="$(awk '{print $1}' deploy.tar.gz.sha256)" && \
+    actual="$(sha256sum deploy.tar.gz | awk '{print $1}')" && \
+    [ "$expected" = "$actual" ] && \
+    mkdir -p /build/deploy && \
+    tar xzf deploy.tar.gz -C /build/deploy
+
+FROM debian:bookworm-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /build/geth /usr/local/bin/geth
+COPY --from=builder /build/deploy/ /opt/ab-deploy/
+
+COPY entrypoint.sh /usr/local/bin/
+RUN chmod 755 /usr/local/bin/entrypoint.sh
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

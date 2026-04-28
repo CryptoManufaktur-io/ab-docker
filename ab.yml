@@ -1,0 +1,59 @@
+x-logging: &logging
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+
+services:
+  node:
+    build:
+      context: ./node
+      dockerfile: Dockerfile.binary
+      args:
+        - AB_VERSION=${AB_VERSION}
+        - AB_DEPLOY_VERSION=${AB_DEPLOY_VERSION}
+    image: ab-node:local
+    pull_policy: build
+    container_name: ${PROJECT_NAME}-node
+    restart: unless-stopped
+    stop_grace_period: 5m
+    volumes:
+      - ab-data:/data
+    environment:
+      - NETWORK=${NETWORK:-mainnet}
+      - EXTRA_FLAGS=${EXTRA_FLAGS:-}
+    ports:
+      - ${P2P_PORT:-33333}:33333/tcp
+      - ${P2P_PORT:-33333}:33333/udp
+    <<: *logging
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          curl -sf -X POST
+          -H 'Content-Type: application/json'
+          -d '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}'
+          http://localhost:8545 | grep -q '"result"'
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.${RPC_HOST}.entrypoints=websecure
+      - traefik.http.routers.${RPC_HOST}.rule=Host(`${RPC_HOST}.${DOMAIN}`)
+      - traefik.http.routers.${RPC_HOST}.tls.certresolver=letsencrypt
+      - traefik.http.routers.${RPC_HOST}.service=${RPC_LB}
+      - traefik.http.services.${RPC_LB}.loadbalancer.server.port=8545
+      - traefik.http.routers.${WS_HOST}.entrypoints=websecure
+      - traefik.http.routers.${WS_HOST}.rule=Host(`${WS_HOST}.${DOMAIN}`)
+      - traefik.http.routers.${WS_HOST}.tls.certresolver=letsencrypt
+      - traefik.http.routers.${WS_HOST}.service=${WS_LB}
+      - traefik.http.services.${WS_LB}.loadbalancer.server.port=8546
+      - metrics.scrape=true
+      - metrics.port=6060
+      - metrics.path=/debug/metrics/prometheus
+
+volumes:
+  ab-data:
