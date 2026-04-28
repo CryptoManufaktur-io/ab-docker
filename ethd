@@ -977,7 +977,7 @@ logs() {
 
 
 check_sync() {
-  ./scripts/check_sync.sh "$@"
+  ./scripts/check_sync.sh --compose-service node "$@"
 }
 
 
