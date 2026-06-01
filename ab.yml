@@ -42,16 +42,29 @@ services:
     labels:
       - traefik.enable=true
       - traefik.docker.network=${DOCKER_EXT_NETWORK}
-      - traefik.http.routers.${RPC_HOST}.entrypoints=websecure
-      - traefik.http.routers.${RPC_HOST}.rule=Host(`${RPC_HOST}.${DOMAIN}`)
-      - traefik.http.routers.${RPC_HOST}.tls.certresolver=letsencrypt
-      - traefik.http.routers.${RPC_HOST}.service=${RPC_LB}
-      - traefik.http.services.${RPC_LB}.loadbalancer.server.port=8545
-      - traefik.http.routers.${WS_HOST}.entrypoints=websecure
-      - traefik.http.routers.${WS_HOST}.rule=Host(`${WS_HOST}.${DOMAIN}`)
-      - traefik.http.routers.${WS_HOST}.tls.certresolver=letsencrypt
-      - traefik.http.routers.${WS_HOST}.service=${WS_LB}
-      - traefik.http.services.${WS_LB}.loadbalancer.server.port=8546
+
+      # rpc
+      - traefik.http.routers.${RPC_HOST:-ab}.service=${RPC_HOST:-ab}
+      - traefik.http.routers.${RPC_HOST:-ab}.entrypoints=websecure
+      - traefik.http.routers.${RPC_HOST:-ab}.rule=Host(`${RPC_HOST:-ab}.${DOMAIN}`)
+      - traefik.http.routers.${RPC_HOST:-ab}.tls.certresolver=letsencrypt
+      - traefik.http.routers.${RPC_HOST:-ab}lb.service=${RPC_HOST:-ab}
+      - traefik.http.routers.${RPC_HOST:-ab}lb.entrypoints=websecure
+      - traefik.http.routers.${RPC_HOST:-ab}lb.rule=Host(`${RPC_LB:-ab-lb}.${DOMAIN}`)
+      - traefik.http.routers.${RPC_HOST:-ab}lb.tls.certresolver=letsencrypt
+      - traefik.http.services.${RPC_HOST:-ab}.loadbalancer.server.port=8545
+
+      # WS
+      - traefik.http.routers.${WS_HOST:-abws}.service=${WS_HOST:-abws}
+      - traefik.http.routers.${WS_HOST:-abws}.entrypoints=websecure
+      - traefik.http.routers.${WS_HOST:-abws}.rule=Host(`${WS_HOST:-abws}.${DOMAIN}`)
+      - traefik.http.routers.${WS_HOST:-abws}.tls.certresolver=letsencrypt
+      - traefik.http.routers.${WS_HOST:-abws}lb.service=${WS_HOST:-abws}
+      - traefik.http.routers.${WS_HOST:-abws}lb.entrypoints=websecure
+      - traefik.http.routers.${WS_HOST:-abws}lb.rule=Host(`${WS_LB:-abws-lb}.${DOMAIN}`)
+      - traefik.http.routers.${WS_HOST:-abws}lb.tls.certresolver=letsencrypt
+      - traefik.http.services.${WS_HOST:-abws}.loadbalancer.server.port=8546      
+
       - metrics.scrape=true
       - metrics.port=6060
       - metrics.path=/debug/metrics/prometheus
