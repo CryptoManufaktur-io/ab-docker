@@ -63,11 +63,13 @@ services:
       - traefik.http.routers.${WS_HOST:-abws}lb.entrypoints=websecure
       - traefik.http.routers.${WS_HOST:-abws}lb.rule=Host(`${WS_LB:-abws-lb}.${DOMAIN}`)
       - traefik.http.routers.${WS_HOST:-abws}lb.tls.certresolver=letsencrypt
-      - traefik.http.services.${WS_HOST:-abws}.loadbalancer.server.port=8546      
+      - traefik.http.services.${WS_HOST:-abws}.loadbalancer.server.port=8546
 
       - metrics.scrape=true
       - metrics.port=6060
       - metrics.path=/debug/metrics/prometheus
+      - metrics.instance=ab
+      - metrics.network=${NETWORK:-mainnet}
 
 volumes:
   ab-data:
