@@ -50,6 +50,12 @@ Key variables in `.env`:
 | `WS_PORT` | WebSocket port | `8546` |
 | `EXTRA_FLAGS` | Additional geth flags | (empty) |
 
+The public HTTP and WebSocket APIs expose only `eth,net,web3,txpool,rpc`. The `debug` and `admin` namespaces are not
+served because they can rewind the chain head, write files and profile the node. To re-enable `debug`, set
+`EXTRA_FLAGS=--http.api=eth,net,web3,txpool,rpc,debug --ws.api=eth,net,web3,txpool,rpc,debug` in your untracked `.env`
+and re-create the container; `EXTRA_FLAGS` is appended after the built-in flags and the last occurrence of a flag wins,
+so no tracked file needs editing.
+
 ### Compose File Overlays
 
 ```bash
