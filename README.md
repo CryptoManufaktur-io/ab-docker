@@ -50,6 +50,10 @@ Key variables in `.env`:
 | `WS_PORT` | WebSocket port | `8546` |
 | `EXTRA_FLAGS` | Additional geth flags | (empty) |
 
+The public HTTP and WebSocket APIs expose only `eth,net,web3,txpool,rpc`. The `debug` and `admin` namespaces are not
+served because they can rewind the chain head, write files and profile the node; if you really need them, add
+`--http.api=...` / `--ws.api=...` to `EXTRA_FLAGS` (the last occurrence of a flag wins).
+
 ### Compose File Overlays
 
 ```bash
